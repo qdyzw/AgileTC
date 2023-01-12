@@ -38,7 +38,7 @@ class Lists extends React.Component {
       iterationFilter: '', // 需求筛选最终选择
       createrFilter: '', // 创建人筛选最终选择
       nameFilter: '', // 用例名称筛选最终选择
-      xmindFile: null, // 保存上传的file文件，单文件    };
+      caseFile: null, // 保存上传的file文件，单文件    };
       checked: false,
       requirementIds: [],
       requirementObj: [],
@@ -61,8 +61,6 @@ class Lists extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (this.props.list != nextProps.list) {
       this.setState({ list: nextProps.list }, () => {
-        this.getRequirementsById(nextProps.list || []);
-
         this.setState({
           loading: nextProps.loading,
           current: this.props.current,
@@ -70,6 +68,8 @@ class Lists extends React.Component {
           iterationFilter: this.props.iterationFilter,
           createrFilter: this.props.createrFilter,
           nameFilter: this.props.nameFilter,
+          caseKeyWords: this.props.caseKeyWords,
+          expendKeys: [],
         });
       });
     }
@@ -97,48 +97,24 @@ class Lists extends React.Component {
     });
   };
 
-  getRequirementsById = list => {
-    // let requirementIds = [];
-    // requirementIds = Array.from(
-    //   new Set(list.map(item => item.requirementId).filter(item => item)),
-    // );
-    // request(`${this.props.oeApiPrefix}/business-lines/requirements`, {
-    //   method: 'GET',
-    //   params: { requirementIds: requirementIds.join(',') || ' ' },
-    // }).then(res => {
-    //   this.setState({ requirementObj: res.data || [], loading: false });
-    // });
-  };
-
   onChangeCheckbox = e => {
     this.setState({ checked: e.target.checked });
   };
-  seeSmkCase = record => {
-    this.context.router.history.push(
-      `/case/caseManager/${this.props.productId}/${record.id}/undefined/2`,
-    );
-    message.info(record);
-  };
-  onDownloadCase = record => {
-    let a = document.createElement('a');
-    a.href = `${baseUrl}/file/export?id=${record.id}`;
-    a.target = '_blank';
-    a.click();
-  };
+
   setColumns = () => {
     const columns = [
       {
         title: '用例集ID',
         dataIndex: 'id',
         key: 'id',
-        width: 100,
-        render: text => <div>{text}</div>,
+        width: '8%',
+        render: text => <div style={{ minWidth: '70px' }}>{text}</div>,
       },
       {
         title: '用例集名称',
         dataIndex: 'title',
         key: 'title',
-        width: 200,
+        width: '25%',
         render: (text, record) => {
           let url = `${this.props.baseUrl}/caseManager/${this.props.productId}/${record.id}/undefined/0`;
           return <Link to={url}>{text}</Link>;
@@ -148,24 +124,25 @@ class Lists extends React.Component {
         title: '关联需求',
         dataIndex: 'requirementId',
         key: 'requirementId',
-        width: 200,
+        width: '20%',
+        render: text => <div style={{ minWidth: '200px' }}>{text}</div>,
       },
       {
         title: '最近更新人',
         dataIndex: 'modifier',
-        width: 120,
+        width: '10%',
         key: 'modifier',
       },
       {
         title: '创建人',
         dataIndex: 'creator',
-        width: 120,
+        width: '7%',
         key: 'creator',
       },
       {
         title: '创建时间',
         dataIndex: 'gmtCreated',
-        width: 180,
+        width: '15%',
         key: 'gmtCreated',
         render: text => {
           return (
@@ -179,7 +156,7 @@ class Lists extends React.Component {
       {
         title: '操作',
         dataIndex: 'handle',
-        width: 300,
+        width: '15%',
         key: 'handle',
         render: (text, record) => {
           const { projectLs, requirementLs } = this.props.options;
@@ -249,51 +226,48 @@ class Lists extends React.Component {
               <Dropdown
                 overlay={
                   <Menu>
-                    <Menu.Item disabled={creator !== recordCreator}>
-                      {(creator !== recordCreator && (
-                        <Tooltip title={`只允许创建者：${creator} 删除`}>
-                          <span>删除</span>
-                        </Tooltip>
-                      )) || (
-                        <a
-                          onClick={() => {
-                            Modal.confirm({
-                              title: '确认删除用例集吗',
-                              content: (
-                                <span>
-                                  当前正在删除&nbsp;&nbsp;
-                                  <span style={{ color: 'red' }}>
-                                    {record.title}
-                                  </span>
-                                  &nbsp;&nbsp;用例集，并且删除用例集包含的{' '}
-                                  <span style={{ color: 'red' }}>
-                                    {record.recordNum}
-                                  </span>{' '}
-                                  个测试任务与测试结果等信息，此操作不可撤销
-                                  <br />
-                                  <br />
-                                  <Checkbox onChange={this.onChangeCheckbox}>
-                                    我明白以上操作
-                                  </Checkbox>
+                    <Menu.Item>
+                      <a
+                        onClick={() => {
+                          Modal.confirm({
+                            title: '确认删除用例集吗',
+                            content: (
+                              <span>
+                                当前正在删除&nbsp;&nbsp;
+                                <span style={{ color: 'red' }}>
+                                  {record.title}
                                 </span>
-                              ),
-                              onOk: e => {
-                                if (this.state.checked) {
-                                  this.delOk(record);
-                                  Modal.destroyAll();
-                                } else {
-                                  message.info('请先勾选我已明白以上操作');
-                                }
-                              },
-                              icon: <Icon type="exclamation-circle" />,
-                              cancelText: '取消',
-                              okText: '删除',
-                            });
-                          }}
-                        >
-                          删除
-                        </a>
-                      )}
+                                &nbsp;&nbsp;用例集，并且删除用例集包含的{' '}
+                                <span style={{ color: 'red' }}>
+                                  {record.recordNum}
+                                </span>{' '}
+                                个测试任务与测试结果等信息，此操作不可撤销
+                                <br />
+                                <br />
+                                <Checkbox onChange={this.onChangeCheckbox}>
+                                  我明白以上操作
+                                </Checkbox>
+                              </span>
+                            ),
+                            onOk: e => {
+                              if (this.state.checked) {
+                                this.delOk(record);
+                                Modal.destroyAll();
+                              } else {
+                                message.info('请先勾选我已明白以上操作');
+                              }
+                            },
+                            icon: <Icon type="exclamation-circle" />,
+                            cancelText: '取消',
+                            okText: '删除',
+                          });
+                        }}
+                      >
+                        删除
+                      </a>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <a href={`/history/${record.id}`}>历史版本</a>
                     </Menu.Item>
                     <Menu.Item>
                       <a
@@ -325,6 +299,7 @@ class Lists extends React.Component {
         createrFilter,
         iterationFilter,
         choiseDate,
+        caseKeyWords,
       } = this.state;
       this.props.getCaseList(
         this.state.current,
@@ -332,6 +307,7 @@ class Lists extends React.Component {
         createrFilter || '',
         iterationFilter || '',
         choiseDate || [],
+        caseKeyWords || '',
       );
     });
   };
@@ -508,50 +484,37 @@ class Lists extends React.Component {
                 </a>
               </Tooltip>
               <Tooltip title={`删除任务`}>
-                {(creator !== recordCreator && (
-                  <Tooltip title={`只允许创建者：${recordCreator}删除`}>
-                    <span>
-                      <a
-                        className="icon-bg border-a-redius-right margin-3-right"
-                        disabled={creator !== recordCreator}
-                      >
-                        <Icon type="delete" />
-                      </a>
-                    </span>
-                  </Tooltip>
-                )) || (
-                  <a
-                    onClick={() => {
-                      Modal.confirm({
-                        title: '确认删除测试任务吗',
-                        content: (
-                          <span>
-                            这将删除该测试任务下所有的测试与测试结果等信息，并且不可撤销。{' '}
-                            <br />
-                            <Checkbox onChange={this.onChangeCheckbox}>
-                              我明白以上操作
-                            </Checkbox>
-                          </span>
-                        ),
-                        onOk: e => {
-                          if (this.state.checked) {
-                            this.deleteRecordList(record);
+                <a
+                  onClick={() => {
+                    Modal.confirm({
+                      title: '确认删除测试任务吗',
+                      content: (
+                        <span>
+                          这将删除该测试任务下所有的测试与测试结果等信息，并且不可撤销。{' '}
+                          <br />
+                          <Checkbox onChange={this.onChangeCheckbox}>
+                            我明白以上操作
+                          </Checkbox>
+                        </span>
+                      ),
+                      onOk: e => {
+                        if (this.state.checked) {
+                          this.deleteRecordList(record);
 
-                            Modal.destroyAll();
-                          } else {
-                            message.info('请先勾选我已明白以上操作');
-                          }
-                        },
-                        icon: <Icon type="exclamation-circle" />,
-                        cancelText: '取消',
-                        okText: '删除',
-                      });
-                    }}
-                    className="icon-bg border-a-redius-right margin-3-right"
-                  >
-                    <Icon type="delete" />
-                  </a>
-                )}
+                          Modal.destroyAll();
+                        } else {
+                          message.info('请先勾选我已明白以上操作');
+                        }
+                      },
+                      icon: <Icon type="exclamation-circle" />,
+                      cancelText: '取消',
+                      okText: '删除',
+                    });
+                  }}
+                  className="icon-bg border-a-redius-right margin-3-right"
+                >
+                  <Icon type="delete" />
+                </a>
               </Tooltip>
             </span>
           );

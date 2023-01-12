@@ -2,10 +2,9 @@
 /* eslint arrow-parens: 0 */
 import React from 'react'
 import { enquireScreen } from 'enquire-js'
-import { Layout } from 'antd'
-const { Header } = Layout
 import Banner3 from './Banner3'
 import Footer0 from './Footer0'
+import Headers from '../../layouts/headers'
 
 import { Banner30DataSource, Footer00DataSource } from './data.source'
 import './less/antMotionStyle.less'
@@ -66,11 +65,7 @@ export default class Home extends React.Component {
           this.dom = d
         }}
       >
-        <Header style={{ zIndex: 9 }}>
-          <a href="/" style={{ color: '#fff', fontSize: 24 }}>
-            AgileTC
-          </a>
-        </Header>
+        <Headers />
         {/* 如果不是 dva 2.0 替换成 {children} start */}
         {this.state.show && children}
         {/* 如果不是 dva 2.0 替换成 {children} end */}

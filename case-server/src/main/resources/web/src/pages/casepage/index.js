@@ -1,17 +1,14 @@
 import React from 'react'
 import CaseLists from '../../components/case/caselist'
 import 'antd/dist/antd.css'
-import { Layout } from 'antd'
-const { Header } = Layout
+import '../landing/less/index.less'
+import Headers from '../../layouts/headers'
+
 class casePage extends React.Component {
   render() {
     return (
       <section style={{ marginBottom: 30 }}>
-        <Header style={{ zIndex: 9 }}>
-          <a href="/" style={{ color: '#fff', fontSize: 24 }}>
-            AgileTC
-          </a>
-        </Header>
+        <Headers />
         <div style={{ padding: 24 }}>
           <CaseLists
             {...this.props}
